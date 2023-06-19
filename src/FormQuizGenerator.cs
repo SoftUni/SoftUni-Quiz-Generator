@@ -71,28 +71,10 @@ namespace SoftUniQuizGenerator
 			richTextBoxLogs.SelectionLength = 0;
 			richTextBoxLogs.ScrollToCaret();
 		}
-
-		public static string TruncateString(string? input, int maxLength = 100)
+		public void LogException(Exception ex)
 		{
-			if (input == null)
-				input = string.Empty;
-			input = input.Replace("\r", " ").Trim();
-			if (input.Length <= maxLength)
-			{
-				return input;
-			}
-			else if (maxLength <= 3)
-			{
-				return input.Substring(0, maxLength);
-			}
-			else
-			{
-				int midLength = maxLength - 3;
-				int halfLength = midLength / 2;
-				string start = input.Substring(0, halfLength);
-				string end = input.Substring(input.Length - halfLength);
-				return $"{start}...{end}";
-			}
+			this.LogError(ex.Message);
+			this.LogError(ex.StackTrace, "Exception", 1);
 		}
 
 		private void FormQuizGenerator_Load(object sender, EventArgs e)
@@ -105,6 +87,40 @@ namespace SoftUniQuizGenerator
 			this.textBoxOutputFolder.Text = Path.GetFullPath(outputFolder);
 
 			this.ActiveControl = this.buttonGenerate;
+		}
+
+		private void buttonGenerate_Click(object sender, EventArgs e)
+		{
+			string inputFilePath = this.textBoxInputFile.Text;
+			string outputFolderPath = this.textBoxOutputFolder.Text;
+			GenerateQuiz(inputFilePath, outputFolderPath);
+		}
+
+		private void GenerateQuiz(string inputFilePath, string outputFolderPath)
+		{
+			if (KillAllProcesses("WINWORD"))
+				Console.WriteLine("MS Word (WINWORD.EXE) is still running -> process terminated.");
+
+			this.Log("Quiz generation started.");
+			var wordApp = new Word.Application();
+			var doc = wordApp.Documents.Open(inputFilePath);
+			try
+			{
+				this.Log("Parsing the input document: " + inputFilePath);
+				QuizParser quizParser = new QuizParser(this);
+				QuizDocument quiz = quizParser.Parse(doc);
+				this.Log("Input document parsed successfully.");
+				quizParser.LogQuiz(quiz);
+			}
+			catch (Exception ex)
+			{
+				this.LogException(ex);
+			}
+			finally
+			{
+				doc.Close();
+				wordApp.Quit();
+			}
 		}
 
 		public bool KillAllProcesses(string processName)
@@ -125,68 +141,6 @@ namespace SoftUniQuizGenerator
 				}
 			}
 			return (killedProcessesCount > 0);
-		}
-
-		private void buttonGenerate_Click(object sender, EventArgs e)
-		{
-			if (KillAllProcesses("WINWORD"))
-				Console.WriteLine("MS Word (WINWORD.EXE) is still running -> process terminated.");
-
-			this.Log("Quiz generation started.");
-			var wordApp = new Word.Application();
-			string inputFilePath = this.textBoxInputFile.Text;
-			var doc = wordApp.Documents.Open(inputFilePath);
-			try
-			{
-				this.Log("Parsing the input document: " + inputFilePath);
-				QuizParser quizParser = new QuizParser(this);
-				QuizDocument quiz = quizParser.Parse(doc);
-				this.Log("Input document parsed successfully.");
-				LogQuiz(quiz);
-			}
-			catch (Exception ex)
-			{
-				this.LogError(ex.Message);
-			}
-			finally
-			{
-				doc.Close();
-				wordApp.Quit();
-			}
-		}
-
-		private void LogQuiz(QuizDocument quiz)
-		{
-			this.Log("Quiz document:");
-			string quizHeaderText = TruncateString(quiz.ContentBeforeQuestions.Text);
-			this.Log($"Quiz header: {quizHeaderText}", 1);
-			this.Log($"Question groups: {quiz.QuestionGroups.Count}", 1);
-			foreach (var group in quiz.QuestionGroups)
-			{
-				string groupHeaderText = TruncateString(group.ContentBeforeQuestions?.Text);
-				this.Log($"Group header: {groupHeaderText}", 2);
-				this.Log($"Questions: {group.Questions.Count}", 2);
-				foreach (var question in group.Questions)
-				{
-					string questionHeaderText = TruncateString(question.ContentBeforeAnswers?.Text);
-					this.Log($"Question content: {questionHeaderText}", 3);
-					this.Log($"Answers: {question.Answers.Count}", 3);
-					foreach (var answer in question.Answers)
-					{
-						string prefix = answer.IsCorrect ? "Correct answer" : "Wrong answer";
-						string answerText = TruncateString(answer.Content.Text);
-						this.Log($"{prefix}: {answerText}", 4);
-					}
-					string questionFooterText = TruncateString(question.ContentAfterAnswers?.Text);
-					if (questionFooterText != null)
-						this.Log($"Question footer: {questionFooterText}", 3);
-				}
-				string groupFooterText = TruncateString(group.ContentAfterQuestions?.Text);
-				if (groupFooterText != "")
-					this.Log($"Group footer: {groupFooterText}", 2);
-			}
-			string quizFooterText = TruncateString(quiz.ContentAfterQuestions?.Text);
-			this.Log($"Quiz footer: {quizFooterText}", 1);
 		}
 	}
 }
