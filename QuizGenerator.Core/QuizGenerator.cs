@@ -1,6 +1,7 @@
 ﻿using static QuizGenerator.Core.StringUtils;
 using Word = Microsoft.Office.Interop.Word;
 using System.Diagnostics;
+using Microsoft.Office.Interop.Word;
 
 namespace QuizGenerator.Core
 {
@@ -128,14 +129,16 @@ namespace QuizGenerator.Core
 			this.logger.Log($"Quiz header: {quizHeaderText}", 1);
 			AppendRange(outputDoc, quiz.HeaderContent);
 
-			// Replace all occurences of "# # #" with the variant number
-			Word.Find find = this.wordApp.Selection.Find;
-			find.Text = "# # #";
-			find.Replacement.Text = quizVariant.ToString("000");
-			find.Forward = true;
-			find.Wrap = Word.WdFindWrap.wdFindContinue;
-			object replaceAll = Word.WdReplace.wdReplaceAll;
-			find.Execute(Replace: ref replaceAll);
+			// Replace all occurences of "# # #" with the variant number (page headers + body)
+			string variantFormatted = quizVariant.ToString("000");
+			foreach (Word.Section section in outputDoc.Sections)
+			{
+				foreach (Word.HeaderFooter headerFooter in section.Headers)
+				{
+					ReplaceTextInRange(headerFooter.Range, "# # #", variantFormatted);
+				}
+			}
+			ReplaceTextInRange(outputDoc.Content, "# # #", variantFormatted);
 
 			int questionNumber = 0;
 			this.logger.Log($"Question groups = {quiz.QuestionGroups.Count}", 1);
@@ -180,6 +183,17 @@ namespace QuizGenerator.Core
 			string quizFooterText = TruncateString(quiz.FooterContent?.Text);
 			this.logger.Log($"Quiz footer: {quizFooterText}", 1);
 			AppendRange(outputDoc, quiz.FooterContent);
+		}
+
+		private void ReplaceTextInRange(Word.Range range, string srcText, string replaceText)
+		{
+			Word.Find find = range.Find;
+			find.Text = srcText;
+			find.Replacement.Text = replaceText;
+			find.Forward = true;
+			find.Wrap = Word.WdFindWrap.wdFindContinue;
+			object replaceAll = Word.WdReplace.wdReplaceAll;
+			find.Execute(Replace: ref replaceAll);
 		}
 
 		public void AppendRange(Word.Document targetDocument, Word.Range sourceRange)
