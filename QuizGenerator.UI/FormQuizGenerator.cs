@@ -1,7 +1,6 @@
-using Word = Microsoft.Office.Interop.Word;
-using System.Diagnostics;
+using QuizGenerator.Core;
 
-namespace SoftUniQuizGenerator
+namespace QuizGenerator.UI
 {
 	public partial class FormQuizGenerator : Form, ILogger
 	{
@@ -93,8 +92,39 @@ namespace SoftUniQuizGenerator
 		{
 			string inputFilePath = this.textBoxInputFile.Text;
 			string outputFolderPath = this.textBoxOutputFolder.Text;
-			QuizGenerator quizGenerator = new QuizGenerator(this);
+			RandomizedQuizGenerator quizGenerator = new RandomizedQuizGenerator(this);
 			quizGenerator.GenerateQuiz(inputFilePath, outputFolderPath);
+		}
+
+		private void buttonChooseInputFile_Click(object sender, EventArgs e)
+		{
+			OpenFileDialog openFileDialog = new OpenFileDialog
+			{
+				InitialDirectory = Path.GetDirectoryName(this.textBoxInputFile.Text),
+				FileName = this.textBoxInputFile.Text,
+				Filter = "MS Word files (*.docx)|*.docx|All files (*.*)|*.*",
+				CheckFileExists = true,
+				FilterIndex = 1,
+				RestoreDirectory = true
+			};
+
+			if (openFileDialog.ShowDialog() == DialogResult.OK)
+			{
+				this.textBoxInputFile.Text = openFileDialog.FileName;
+			}
+		}
+
+		private void buttonChooseFolder_Click(object sender, EventArgs e)
+		{
+			FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog()
+			{
+				InitialDirectory = this.textBoxOutputFolder.Text
+			};
+
+			if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+			{
+				this.textBoxOutputFolder.Text = folderBrowserDialog.SelectedPath;
+			}
 		}
 	}
 }

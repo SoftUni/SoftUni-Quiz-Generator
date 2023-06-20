@@ -1,4 +1,4 @@
-﻿namespace SoftUniQuizGenerator
+﻿namespace QuizGenerator.Core
 {
 	public static class StringUtils
 	{

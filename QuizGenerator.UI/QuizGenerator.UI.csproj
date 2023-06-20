@@ -6,13 +6,10 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>$(MSBuildProjectName.Replace(" ", "_").Replace("-", ""))</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Office.Interop.Word" Version="15.0.4797.1004" />
-    <PackageReference Include="MicrosoftOfficeCore" Version="15.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <ProjectReference Include="..\QuizGenerator.Core\QuizGenerator.Core.csproj" />
   </ItemGroup>
 
 </Project>

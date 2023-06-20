@@ -1,4 +1,4 @@
-﻿namespace SoftUniQuizGenerator
+﻿namespace QuizGenerator.UI
 {
 	partial class FormQuizGenerator
 	{
@@ -68,6 +68,7 @@
 			buttonChooseInputFile.TabIndex = 2;
 			buttonChooseInputFile.Text = "Choose File";
 			buttonChooseInputFile.UseVisualStyleBackColor = true;
+			buttonChooseInputFile.Click += buttonChooseInputFile_Click;
 			// 
 			// labelOutputFolder
 			// 
@@ -98,6 +99,7 @@
 			buttonChooseFolder.TabIndex = 5;
 			buttonChooseFolder.Text = "Choose Folder";
 			buttonChooseFolder.UseVisualStyleBackColor = true;
+			buttonChooseFolder.Click += buttonChooseFolder_Click;
 			// 
 			// buttonGenerate
 			// 

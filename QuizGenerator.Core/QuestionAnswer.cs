@@ -1,6 +1,6 @@
 ﻿using Word = Microsoft.Office.Interop.Word;
 
-namespace SoftUniQuizGenerator
+namespace QuizGenerator.Core
 {
 	class QuestionAnswer
 	{

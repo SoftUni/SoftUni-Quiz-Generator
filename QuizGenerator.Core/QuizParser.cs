@@ -1,8 +1,8 @@
-﻿using static SoftUniQuizGenerator.StringUtils;
+﻿using static QuizGenerator.Core.StringUtils;
 using Word = Microsoft.Office.Interop.Word;
 using Newtonsoft.Json;
 
-namespace SoftUniQuizGenerator
+namespace QuizGenerator.Core
 {
 	class QuizParser
 	{
@@ -40,6 +40,7 @@ namespace SoftUniQuizGenerator
 				if (text.StartsWith(QuizStartTag))
 				{
 					// ~~~ Quiz: {"VariantsToGenerate":5, "AnswersPerQuestion":4, "Lang":"BG"} ~~~
+					this.logger.Log("Parsing: " + text, 1);
 					var settings = ParseSettings(text, QuizStartTag);
 					quiz.VariantsToGenerate = settings.VariantsToGenerate;
 					quiz.AnswersPerQuestion = settings.AnswersPerQuestion;
@@ -49,6 +50,7 @@ namespace SoftUniQuizGenerator
 				else if (text.StartsWith(QuestionGroupTag))
 				{
 					// ~~~ Question Group: { "QuestionsToGenerate": 1, "SkipHeader": true } ~~~
+					this.logger.Log("Parsing: " + text, 1);
 					SaveQuizHeader();
 					SaveGroupHeader();
 					SaveQuestionFooter();
@@ -66,6 +68,7 @@ namespace SoftUniQuizGenerator
 				else if (text.StartsWith(QuestionTag))
 				{
 					// ~~~ Question ~~~
+					this.logger.Log("Parsing: " + text, 1);
 					SaveGroupHeader();
 					SaveQuestionFooter();
 					question = new QuizQuestion();
@@ -172,7 +175,7 @@ namespace SoftUniQuizGenerator
 		public void LogQuiz(QuizDocument quiz)
 		{
 			this.logger.LogNewLine();
-			this.logger.Log($"Quiz document:");
+			this.logger.Log($"Parsed quiz document (from the input MS Word file):");
 			this.logger.Log($" - LangCode: {quiz.LangCode}");
 			this.logger.Log($" - VariantsToGenerate: {quiz.VariantsToGenerate}");
 			this.logger.Log($" - TotalAvailableQuestions: {quiz.TotalAvailableQuestions}");

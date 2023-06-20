@@ -1,15 +1,15 @@
-﻿using static SoftUniQuizGenerator.StringUtils;
+﻿using static QuizGenerator.Core.StringUtils;
 using Word = Microsoft.Office.Interop.Word;
 using System.Diagnostics;
 
-namespace SoftUniQuizGenerator
+namespace QuizGenerator.Core
 {
-	class QuizGenerator
+	public class RandomizedQuizGenerator
 	{
 		private ILogger logger;
 		private Word.Application wordApp;
 
-		public QuizGenerator(ILogger logger)
+		public RandomizedQuizGenerator(ILogger logger)
 		{
 			this.logger = logger;
 		}
@@ -47,6 +47,7 @@ namespace SoftUniQuizGenerator
 				
 				this.logger.LogNewLine();
 				this.logger.Log("Quiz generation completed.");
+				this.logger.LogNewLine();
 			}
 			catch (Exception ex)
 			{
@@ -252,6 +253,12 @@ namespace SoftUniQuizGenerator
 
 			this.logger.LogNewLine();
 			this.logger.Log($"Writing answers sheet: {outputFileName}");
+			for (int quizIndex = 0; quizIndex < quizAnswerSheet.Count; quizIndex++)
+			{
+				List<char> answers = quizAnswerSheet[quizIndex];
+				string answersAsString = $"Variant #{quizIndex + 1}: {string.Join(" ", answers)}";
+				this.logger.Log(answersAsString, 1);
+			}
 
 			List<string> html = new List<string>();
 			html.Add("<table border='1'>");
