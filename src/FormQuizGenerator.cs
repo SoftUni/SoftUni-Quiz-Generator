@@ -64,7 +64,7 @@ namespace SoftUniQuizGenerator
 			});
 		}
 
-		private void LogNewLine()
+		public void LogNewLine()
 		{
 			this.richTextBoxLogs.AppendText("\n");
 			richTextBoxLogs.SelectionStart = richTextBoxLogs.Text.Length;
@@ -93,54 +93,8 @@ namespace SoftUniQuizGenerator
 		{
 			string inputFilePath = this.textBoxInputFile.Text;
 			string outputFolderPath = this.textBoxOutputFolder.Text;
-			GenerateQuiz(inputFilePath, outputFolderPath);
-		}
-
-		private void GenerateQuiz(string inputFilePath, string outputFolderPath)
-		{
-			if (KillAllProcesses("WINWORD"))
-				Console.WriteLine("MS Word (WINWORD.EXE) is still running -> process terminated.");
-
-			this.Log("Quiz generation started.");
-			var wordApp = new Word.Application();
-			var doc = wordApp.Documents.Open(inputFilePath);
-			try
-			{
-				this.Log("Parsing the input document: " + inputFilePath);
-				QuizParser quizParser = new QuizParser(this);
-				QuizDocument quiz = quizParser.Parse(doc);
-				this.Log("Input document parsed successfully.");
-				quizParser.LogQuiz(quiz);
-			}
-			catch (Exception ex)
-			{
-				this.LogException(ex);
-			}
-			finally
-			{
-				doc.Close();
-				wordApp.Quit();
-			}
-		}
-
-		public bool KillAllProcesses(string processName)
-		{
-			Process[] processes = Process.GetProcessesByName(processName);
-			int killedProcessesCount = 0;
-			foreach (Process process in processes)
-			{
-				try
-				{
-					process.Kill();
-					killedProcessesCount++;
-					this.Log($"Process {processName} ({process.Id}) is stopped.");
-				}
-				catch
-				{
-					this.LogError($"Process {processName} ({process.Id}) is running, but cannot be stopped.");
-				}
-			}
-			return (killedProcessesCount > 0);
+			QuizGenerator quizGenerator = new QuizGenerator(this);
+			quizGenerator.GenerateQuiz(inputFilePath, outputFolderPath);
 		}
 	}
 }

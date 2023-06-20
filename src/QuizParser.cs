@@ -1,6 +1,6 @@
-﻿using Word = Microsoft.Office.Interop.Word;
+﻿using static SoftUniQuizGenerator.StringUtils;
+using Word = Microsoft.Office.Interop.Word;
 using Newtonsoft.Json;
-using Microsoft.Office.Interop.Word;
 
 namespace SoftUniQuizGenerator
 {
@@ -39,10 +39,11 @@ namespace SoftUniQuizGenerator
 
 				if (text.StartsWith(QuizStartTag))
 				{
-					// ~~~ Quiz: { "VariantsToGenerate": 5, "AnswersPerQuestion": 4 } ~~~
+					// ~~~ Quiz: {"VariantsToGenerate":5, "AnswersPerQuestion":4, "Lang":"BG"} ~~~
 					var settings = ParseSettings(text, QuizStartTag);
 					quiz.VariantsToGenerate = settings.VariantsToGenerate;
 					quiz.AnswersPerQuestion = settings.AnswersPerQuestion;
+					quiz.LangCode = settings.Lang;
 					quizHeaderStartPos = paragraph.Range.End;
 				}
 				else if (text.StartsWith(QuestionGroupTag))
@@ -55,6 +56,7 @@ namespace SoftUniQuizGenerator
 					group.Questions = new List<QuizQuestion>();
 					var settings = ParseSettings(text, QuestionGroupTag);
 					group.QuestionsToGenerate = settings.QuestionsToGenerate;
+					group.SkipHeader = settings.SkipHeader;
 					group.AnswersPerQuestion = settings.AnswersPerQuestion;
 					if (group.AnswersPerQuestion == 0)
 						group.AnswersPerQuestion = quiz.AnswersPerQuestion;
@@ -100,7 +102,7 @@ namespace SoftUniQuizGenerator
 					// Take all following paragraphs to the end of the document
 					var start = paragraph.Range.End;
 					var end = doc.Content.End;
-					quiz.ContentAfterQuestions = doc.Range(start, end);
+					quiz.FooterContent = doc.Range(start, end);
 					break;
 				}
 			}
@@ -110,11 +112,11 @@ namespace SoftUniQuizGenerator
 			void SaveQuizHeader()
 			{
 				if (quiz != null && 
-					quiz.ContentBeforeQuestions == null && 
+					quiz.HeaderContent == null && 
 					quizHeaderStartPos != 0)
 				{
-					quiz.ContentBeforeQuestions =
-						doc.Range(quizHeaderStartPos, paragraph.Range.Start - 1);
+					quiz.HeaderContent =
+						doc.Range(quizHeaderStartPos, paragraph.Range.Start);
 				}
 				quizHeaderStartPos = 0;
 			}
@@ -122,11 +124,11 @@ namespace SoftUniQuizGenerator
 			void SaveGroupHeader()
 			{
 				if (group != null && 
-					group.ContentBeforeQuestions == null &&
+					group.HeaderContent == null &&
 					groupHeaderStartPos != 0)
 				{
-					group.ContentBeforeQuestions =
-						doc.Range(groupHeaderStartPos, paragraph.Range.Start - 1);
+					group.HeaderContent =
+						doc.Range(groupHeaderStartPos, paragraph.Range.Start);
 				}
 				groupHeaderStartPos = 0;
 			}
@@ -134,11 +136,11 @@ namespace SoftUniQuizGenerator
 			void SaveQuestionHeader()
 			{
 				if (question != null && 
-					question.ContentBeforeAnswers == null &&
+					question.HeaderContent == null &&
 					questionHeaderStartPos != 0)
 				{
-					question.ContentBeforeAnswers =
-						doc.Range(questionHeaderStartPos, paragraph.Range.Start - 1);
+					question.HeaderContent =
+						doc.Range(questionHeaderStartPos, paragraph.Range.Start);
 				}
 				questionHeaderStartPos = 0;
 			}
@@ -146,12 +148,12 @@ namespace SoftUniQuizGenerator
 			void SaveQuestionFooter()
 			{
 				if (question != null && 
-					question.ContentAfterAnswers == null &&
+					question.FooterContent == null &&
 					questionFooterStartPos != 0 &&
 					questionFooterStartPos < paragraph.Range.Start)
 				{
-					question.ContentAfterAnswers =
-						doc.Range(questionFooterStartPos, paragraph.Range.Start - 1);
+					question.FooterContent =
+						doc.Range(questionFooterStartPos, paragraph.Range.Start);
 				}
 				questionFooterStartPos = 0;
 			}
@@ -167,50 +169,29 @@ namespace SoftUniQuizGenerator
 			return settings;
 		}
 
-		public static string TruncateString(string? input, int maxLength = 150)
-		{
-			if (input == null)
-				input = string.Empty;
-			input = input.Replace("\r", " ").Trim();
-			if (input.Length <= maxLength)
-			{
-				return input;
-			}
-			else if (maxLength <= 3)
-			{
-				return input.Substring(0, maxLength);
-			}
-			else
-			{
-				int midLength = maxLength - 3;
-				int halfLength = midLength / 2;
-				string start = input.Substring(0, halfLength);
-				string end = input.Substring(input.Length - halfLength);
-				return $"{start}...{end}";
-			}
-		}
-
 		public void LogQuiz(QuizDocument quiz)
 		{
+			this.logger.LogNewLine();
 			this.logger.Log($"Quiz document:");
+			this.logger.Log($" - LangCode: {quiz.LangCode}");
 			this.logger.Log($" - VariantsToGenerate: {quiz.VariantsToGenerate}");
 			this.logger.Log($" - TotalAvailableQuestions: {quiz.TotalAvailableQuestions}");
 			this.logger.Log($" - AnswersPerQuestion: {quiz.AnswersPerQuestion}");
-			string quizHeaderText = TruncateString(quiz.ContentBeforeQuestions.Text);
+			string quizHeaderText = TruncateString(quiz.HeaderContent.Text);
 			this.logger.Log($"Quiz header: {quizHeaderText}", 1);
 			this.logger.Log($"Question groups = {quiz.QuestionGroups.Count}", 1);
 			for (int groupIndex = 0; groupIndex < quiz.QuestionGroups.Count; groupIndex++)
 			{
 				this.logger.Log($"[Question Group #{groupIndex+1}]", 1);
 				QuizQuestionGroup group = quiz.QuestionGroups[groupIndex];
-				string groupHeaderText = TruncateString(group.ContentBeforeQuestions?.Text);
+				string groupHeaderText = TruncateString(group.HeaderContent?.Text);
 				this.logger.Log($"Group header: {groupHeaderText}", 2);
 				this.logger.Log($"Questions = {group.Questions.Count}", 2);
 				for (int questionIndex = 0; questionIndex < group.Questions.Count; questionIndex++)
 				{
 					this.logger.Log($"[Question #{questionIndex+1}]", 2);
 					QuizQuestion question = group.Questions[questionIndex];
-					string questionContent = TruncateString(question.ContentBeforeAnswers?.Text);
+					string questionContent = TruncateString(question.HeaderContent?.Text);
 					this.logger.Log($"Question content: {questionContent}", 3);
 					this.logger.Log($"Answers = {question.Answers.Count}", 3);
 					foreach (var answer in question.Answers)
@@ -219,13 +200,13 @@ namespace SoftUniQuizGenerator
 						string answerText = TruncateString(answer.Content.Text);
 						this.logger.Log($"{prefix}: {answerText}", 4);
 					}
-					string questionFooterText = TruncateString(question.ContentAfterAnswers?.Text);
+					string questionFooterText = TruncateString(question.FooterContent?.Text);
 					if (questionFooterText == "")
 						questionFooterText = "(empty)";
 					this.logger.Log($"Question footer: {questionFooterText}", 3);
 				}
 			}
-			string quizFooterText = TruncateString(quiz.ContentAfterQuestions?.Text);
+			string quizFooterText = TruncateString(quiz.FooterContent?.Text);
 			this.logger.Log($"Quiz footer: {quizFooterText}", 1);
 		}
 	}

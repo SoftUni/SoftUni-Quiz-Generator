@@ -6,7 +6,9 @@ namespace SoftUniQuizGenerator
 	{
 		public int VariantsToGenerate { get; set; }
 
-		public int AnswersPerQuestion { get; set; }
+		public string LangCode { get; set; } = "EN";
+
+        public int AnswersPerQuestion { get; set; }
 
 		public int TotalAvailableQuestions
 			=> QuestionGroups.Sum(g => g.Questions.Count);
@@ -14,10 +16,10 @@ namespace SoftUniQuizGenerator
 		public int TotalQuestionsToGenerate
 			=> QuestionGroups.Sum(g => g.QuestionsToGenerate);
 
-		public Word.Range ContentBeforeQuestions { get; set; }
+		public Word.Range HeaderContent { get; set; }
 
         public List<QuizQuestionGroup> QuestionGroups { get; set; }
 
-        public Word.Range ContentAfterQuestions { get; set; }
+        public Word.Range FooterContent { get; set; }
     }
 }

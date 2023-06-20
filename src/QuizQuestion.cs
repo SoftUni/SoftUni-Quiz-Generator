@@ -4,8 +4,16 @@ namespace SoftUniQuizGenerator
 {
 	class QuizQuestion
 	{
-		public Word.Range ContentBeforeAnswers { get; set; }
+		public Word.Range HeaderContent { get; set; }
+
 		public List<QuestionAnswer> Answers { get; set; }
-		public Word.Range ContentAfterAnswers { get; set; }
+
+		public IEnumerable<QuestionAnswer> CorrectAnswers =>
+			this.Answers.Where(a => a.IsCorrect);
+
+		public IEnumerable<QuestionAnswer> WrongAnswers =>
+			this.Answers.Where(a => !a.IsCorrect);
+
+		public Word.Range FooterContent { get; set; }
 	}
 }

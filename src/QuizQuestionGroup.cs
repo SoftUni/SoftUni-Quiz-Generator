@@ -7,7 +7,7 @@ namespace SoftUniQuizGenerator
 		public int QuestionsToGenerate { get; set; }
 		public int AnswersPerQuestion { get; set; }
 		public bool SkipHeader { get; set; }
-		public Word.Range ContentBeforeQuestions { get; set; }
+		public Word.Range HeaderContent { get; set; }
 		public List<QuizQuestion> Questions { get; set; }
 	}
 }
